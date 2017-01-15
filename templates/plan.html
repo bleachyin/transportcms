@@ -1,0 +1,137 @@
+{% extends "frame.html" %}
+
+{% block content %}
+<div class="span10">
+
+			<form action="/plan/save2" class="form-search" method="post">
+                <label class="label">请输入项目开通日期</label>
+                <div class="input-append date form_datetime">
+                    <input id="start_date" name="start_date"  class="input-small" type="text" value="">
+                    <span class="add-on"><i class="icon-th"></i></span>
+                    <span class="add-on"><i class="icon-remove"></i></span>
+                </div>
+                <label class="label">请输入项目结束日期</label>
+                <div class="input-append date form_datetime">
+                	<input id="end_date" name="end_date"  class="input-small" type="text" value="">
+                    <span class="add-on"><i class="icon-th"></i></span>
+                    <span class="add-on"><i class="icon-remove"></i></span>
+                </div>
+				<button type="button"  id="plan_save" class="btn">保存计划</button>
+                <button type="button" class="btn">导出excel表格</button>
+		
+			{%  for planinfo in planinfos %}
+			<div class="row-fluid">
+			<div class="view">
+				<ul class="breadcrumb">
+					<li><a href="{{url_for('plan_stage',rank=rank)}}">{{ planinfo.parentname}}</a>
+				</ul>
+			</div>
+			<table class="table table-hover table-bordered" >
+				<thead>
+					<tr>
+						<th>
+							编号
+						</th>
+						<th>
+							产品
+						</th>
+						<th>
+							需要天数
+						</th>
+						<th>
+							工程开始时间
+						</th>
+						<th>
+							工程结束时间
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+						<tr>
+							<td><p class="child-id">{{ planinfo._id }}</p></td>
+							<td><p class="child-name">{{ planinfo.name }}</p></td>
+							<td><input type="text"  class="input-small child-day" value="{{ planinfo.day }}"> (天)</td>
+							<td><p class="child-start-date">{{planinfo.get('start_date')}}</p></td>
+							<td><p class="child-end-date">{{planinfo.get('end_date')}}</p></td>
+						</tr>
+			</tbody>
+			</table>
+					<input type="hidden" name="rank" class="rank" value={{rank}}>
+					<input type="hidden" name="id" class="id" value={{planinfo._id}}>
+			</form>
+			</div>
+			{% endfor %}
+			<div class="row-fluid">
+				{% if rank > 1 %}
+				<a class="btn btn-xs btn-primary" href="{{url_for('plan_stage',rank=rank-1)}}">上一阶段</a>
+				{% endif %}
+				{% if rank < total %}
+				<a class="btn btn-xs btn-primary" href="{{url_for('plan_stage',rank=rank+1)}}">下一阶段</a>
+				{% endif %}
+			</div>
+		</div>
+<script type="text/javascript">
+
+		$(document).ready(function(){
+			$("button#plan_save").click(function(){
+				if($('input#start_date').val() == null ||$('input#finish_date').val()==""){
+					alert("请选择开工日期")
+					return false
+				}else if ($('input#end_date').val()==null || $('input#end_date').val()==""){
+					alert("请选择结束日期")
+					return false
+				}else{
+					$(this).parents('form').submit()
+				}
+			});
+		})
+
+        $(".form_datetime").datetimepicker({
+            format: "yyyy-mm-dd",
+            autoclose: true,
+            todayBtn: true,
+            pickerPosition: "bottom-left",
+        });
+
+		$('.period-save').bind('click',function(){
+
+            var trs = $(this).parents('div.view').siblings('table').find('tbody').find('tr')
+            var stage = $(this).parents('div.view').siblings('table').find('tbody').find('input.stage').val()
+            var period_id = $(this).parents('div.view').siblings('table').find('tbody').find('input.period_id').val()
+			//var trs = $(this).parents('tr').prevAll('tr')
+			//stage = $(this).parents("tr").siblings('input.stage').val()
+			//period_id = $(this).parents("tr").siblings('input.period_id').val()
+			var saves = new Array()
+			for(var i=0;i<trs.length;i++){
+				child_id = $(trs[i]).find('p.child-id').text()
+				child_day = $(trs[i]).find("input.child-day").val()
+				saves[i] = {"child_id":child_id,"child_day":child_day}
+			}
+			$.ajax({
+				url:"/plan/save",
+				type:"POST",
+				async: false,
+				//contentType: "application/json; charset=utf-8",
+				dataType:"json",
+				data: {
+					"period_id":period_id,
+					"stage":stage,
+					"children":JSON.stringify(saves)
+				},
+				success:function(res){
+					if(res.success == true){
+					alert('保存成功')
+					}else{
+					alert('保存失败')
+					}
+				},
+				error:function(res){
+					alert('保存失败')
+				}
+				}
+			);
+			location.reload();
+		});
+	
+</script>
+{% endblock %}

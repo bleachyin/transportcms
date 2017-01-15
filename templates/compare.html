@@ -1,0 +1,164 @@
+{% extends "frame.html" %}
+
+{% block content %}
+<div class="span10">
+
+			<form action="#" class="form-search" method="post">
+                <label class="label">请选择设计单位</label>
+                <select name="bidding_com">
+                    <option value="1">土建设计1标</option>
+                    <option value="2">土建设计2标</option>
+                    <option value="3">土建设计3标</option>
+                    <option value="4">土建设计4标</option>
+                    <option value="5">系统设计1标</option>
+                    <option value="6">系统设计2标</option>
+                    <option value="7">系统设计3标</option>
+                    <option value="8">系统设计4标</option>
+                </select>
+			</form>
+			{% for stageinfo in stageinfos %}
+			<div class="row-fluid">
+			<div class="view">
+				<ul class="breadcrumb">
+					<li><a href="{{url_for('plan_stage',stage=stage)}}">{{ stageinfo.name }}</a>
+                        <button class="btn btn-xs period-save"><i class="icon-edit"></i>保存</button></li>
+                     <button class="btn btn-xs"><i class=""></i>生成进度比较图</button></li>
+				</ul>
+			</div>
+			<table class="table table-hover table-bordered" >
+				<thead>
+					<tr>
+						<th>
+							编号
+						</th>
+						<th>
+							产品
+						</th>
+						<th>
+							原定需要天数
+						</th>
+						<th>
+							完成时间
+						</th>
+                        <th>
+							实际完成时间
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for child in stageinfo.children %}
+						<tr>
+							<td><p class="child-id">{{ child.id }}</p></td>
+							<td><p class="child-name">{{ child.name }}</p></td>
+							<td><p class="child-name">{{ child.day }}(天)</p></td>
+							<td><p class="child-finish-date">{{ child.finish_date }}</p></td>
+                            <td>
+                                 <div class="input-append date form_datetime">
+                                    <input type="text" class="input-small" value="">
+                                    <span class="add-on"><i class="icon-th"></i></span>
+                                    <span class="add-on"><i class="icon-remove"></i></span>
+                                </div>
+                            </td>
+						</tr>
+					{% endfor %}
+					<input type="hidden" class="stage" value={{stageinfo.stage}}>
+					<input type="hidden" class="period_id" value={{stageinfo.id}}>
+				</tbody>
+			</table>
+			</div>
+			{% endfor %}
+			<div class="row span10">
+				{% if stage > 1 %}
+				<a class="btn btn-xs btn-primary" href="{{url_for('plan_compare',stage=stage-1)}}">上一阶段</a>
+				{% endif %}
+				{% if stage < total %}
+				<a class="btn btn-xs btn-primary" href="{{url_for('plan_compare',stage=stage+1)}}">下一阶段</a>
+				{% endif %}
+			</div>
+		</div>
+<script type="text/javascript">
+
+		$(document).ready(function(){
+			$("button#plan_init").click(function(){
+				if($('input#finish_date').val() == null ||$('input#finish_date').val()==""){
+					alert("请选择开工日期")
+					return false
+				}else{
+					$(this).parents('form').submit()
+				}
+			});
+		})
+
+        $(".form_datetime").datetimepicker({
+            format: "yyyy-mm-dd",
+            autoclose: true,
+            todayBtn: true,
+            pickerPosition: "bottom-left",
+        });
+
+		$('.period-save').bind('click',function(){
+
+            var trs = $(this).parents('div.view').siblings('table').find('tbody').find('tr')
+            var stage = $(this).parents('div.view').siblings('table').find('tbody').find('input.stage').val()
+            var period_id = $(this).parents('div.view').siblings('table').find('tbody').find('input.period_id').val()
+			//var trs = $(this).parents('tr').prevAll('tr')
+			//stage = $(this).parents("tr").siblings('input.stage').val()
+			//period_id = $(this).parents("tr").siblings('input.period_id').val()
+			var saves = new Array()
+			for(var i=0;i<trs.length;i++){
+				child_id = $(trs[i]).find('p.child-id').text()
+				child_day = $(trs[i]).find("input.child-day").val()
+				saves[i] = {"child_id":child_id,"child_day":child_day}
+			}
+			$.ajax({
+				url:"/plan/save",
+				type:"POST",
+				async: false,
+				//contentType: "application/json; charset=utf-8",
+				dataType:"json",
+				data: {
+					"period_id":period_id,
+					"stage":stage,
+					"children":JSON.stringify(saves)
+				},
+				success:function(res){
+					if(res.success == true){
+					alert('保存成功')
+					}else{
+					alert('保存失败')
+					}
+				},
+				error:function(res){
+					alert('保存失败')
+				}
+				}
+			);
+			location.reload();
+		});
+
+
+
+        $('.excel-export').bind('click',function(){
+			$.ajax({
+				url:"/plan/generate",
+				type:"POST",
+				async: true,
+				//contentType: "application/json; charset=utf-8",
+				dataType:"json",
+				data: {},
+				success:function(res){
+					if(res.success == true){
+					alert('生成成功')
+					location.href=res.filename
+					}else{
+					alert('生成失败')
+					}
+				},
+				error:function(res){
+					alert('生成失败')
+				}
+				}
+			);
+		});
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+eclipse.preferences.version=1
+encoding//common/bidconst.py=utf-8
+encoding//common/database.py=utf-8
+encoding//common/jsonconst.py=utf-8
+encoding//common/xmlwriter.py=utf-8
+encoding//conf/settings.py=utf-8
+encoding//handler/bidhandler.py=utf-8
+encoding//handler/planhandler.py=utf-8
+encoding//queue/mongoqueue.py=utf-8
+encoding//queue/queuebase.py=utf-8
